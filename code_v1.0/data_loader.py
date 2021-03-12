@@ -77,7 +77,7 @@ class TrainDataLoader(object):
         while status:
             if self.max_inter >= sub_class_img_num - 1:
                 self.max_inter = sub_class_img_num // 2
-
+            #随机抽取template_index，detection_index，保证template_index和detection_index直接不差超过max_inter
             template_index = np.clip(random.choice(range(0, max(1, sub_class_img_num - self.max_inter))), 0,
                                      sub_class_img_num - 1)
             detection_index = np.clip(random.choice(range(1, max(2, self.max_inter))) + template_index, 0,
@@ -147,6 +147,7 @@ class TrainDataLoader(object):
         # pad
         detection_lt_x, detection_lt_y = cx - detection_square_size // 2, cy - detection_square_size // 2
         detection_rb_x, detection_rb_y = cx + detection_square_size // 2, cy + detection_square_size // 2
+        #相对中心点四边对应位移
         left = -detection_lt_x if detection_lt_x < 0 else 0
         top = -detection_lt_y if detection_lt_y < 0 else 0
         right = detection_rb_x - w if detection_rb_x > w else 0

@@ -140,6 +140,9 @@ class TrainDataLoader(object):
 
         w, h = template_img.size
         cx, cy, tw, th = self.ret['template_target_xywh']
+        print(self.ret['template_img_path'])
+        # print(w, h,cx, cy, tw, th)
+        # x=input()
         p = round((tw + th) / 2, 2)
         template_square_size = int(np.sqrt((tw + p) * (th + p)))  # a
         detection_square_size = int(template_square_size * 2)  # A =2a
@@ -161,7 +164,12 @@ class TrainDataLoader(object):
         self.ret['new_template_img_padding'] = ImageOps.expand(template_img, border=padding,
                                                                fill=self.ret['mean_template'])
         self.ret['new_detection_img_padding'] = ImageOps.expand(detection_img, border=padding,
-                                                                fill=self.ret['mean_detection'])
+                                                               fill=self.ret['mean_detection'])
+        # print(self.ret['template_img_path'])
+        # print(self.ret['detection_img_path'])
+        # self.ret['new_template_img_padding'].show()
+        # self.ret['new_detection_img_padding'].show()
+        # x=input()
 
         # crop
         tl = cx + left - template_square_size // 2
@@ -197,12 +205,11 @@ class TrainDataLoader(object):
         self.ret['target_rbcords_of_padding_image'] = np.array([int(x + left + w // 2), int(y + top + h // 2)],
                                                                dtype=np.float32)
         if self.check:
-            s = osp.join(self.tmp_dir,
-                         self.sub_class_dir[index_of_subclass] if index_of_subclass != -1 else "noneclass",
-                         '1_check_detection_target_in_padding')
+            s = osp.join(self.tmp_dir,'1_check_detection_target_in_padding',
+                         self.sub_class_dir[index_of_subclass] if index_of_subclass != -1 else "noneclass")
             if not os.path.exists(s):
                 os.makedirs(s)
-
+            self.ret['sub_class_dir_index'] = self.sub_class_dir[index_of_subclass] if index_of_subclass != -1 else "noneclass"
             im = self.ret['new_detection_img_padding']
             draw = ImageDraw.Draw(im)
             x1, y1 = self.ret['target_tlcords_of_padding_image']
@@ -281,7 +288,7 @@ class TrainDataLoader(object):
 
         # draw pos and neg anchor box
         if self.check:
-            s = osp.join(self.tmp_dir, '4_check_pos_neg_anchors')
+            s = osp.join(self.tmp_dir, '4_check_pos_neg_anchors',self.ret['sub_class_dir_index'])
             if not os.path.exists(s):
                 os.makedirs(s)
 
@@ -325,12 +332,12 @@ class TrainDataLoader(object):
     def __get__(self, index):
         # 挑选数据集子类别文件夹图片
         self._pick_img_pairs(index)
-
         # 裁剪为需要的图片大小
         self._pad_crop_resize(index)
         # self._pad_crop_resize()
-        self.check = False
+        #生成64个anchors，16个正例子
         self._generate_pos_neg_diff()
+        self.check = False
         self._tranform()
         self.count += 1
         self.check = True
@@ -343,7 +350,7 @@ if __name__ == '__main__':
     # we will do a test for dataloader
     loader = TrainDataLoader('../dataset/vot15', check=True,tmp_dir='../tmp/test')
     index_list = range(loader.__len__())
-    for i in range(1000):
+    for i in range(1):
         ret = loader.__get__(random.choice([1]))
         label = ret['pos_neg_diff'][:, 0].reshape(-1)
         pos_index = list(np.where(label == 1)[0])
